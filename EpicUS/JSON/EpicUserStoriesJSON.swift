@@ -19,7 +19,7 @@ struct EpicUserStoriesJSON: Codable {
     
     
     struct Value: Codable {
-        let id, dataVersion, description, workDirectionId: String
+        let id, eusType, dataVersion, description, workDirectionId: String
         let dateCreate, dateRegistration, title, productOwnerId: String
         let dept, num, content: String
         let deletionMark: Bool
@@ -27,6 +27,7 @@ struct EpicUserStoriesJSON: Codable {
         
         enum CodingKeys: String, CodingKey {
             case id = "Ref_Key"
+            case eusType = "ВидДокумента_Key"
             case dataVersion = "DataVersion"
             case description = "Description"
             case workDirectionId = "ВопросДеятельности_Key"
