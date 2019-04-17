@@ -31,6 +31,7 @@ class EUSTableViewController: UITableViewController {
         cell.nameLabel.text = eus.name
         cell.number1CLabel.text = eus.num
         cell.valueLabel.text = "\(eus.businessValue?.value ?? 128)"
+        cell.tfsIdLabel.text = "\(eus.tfsId)"
         cell.statusLabel.text = eus.tfsState
         cell.dateEndLabel.text = globalSettings.dateToString(date: eus.tfsEndDate)
         cell.dateBeginLabel.text = globalSettings.dateToString(date: eus.tfsBeginDate)

@@ -58,7 +58,7 @@ class MainViewController: UIViewController {
                 loadType = .none
             }
         } else {
-            loadType = .first
+            loadType = .none
             //UserDefaults.standard.set(date, forKey: "ModifyDate")
         }
         
@@ -121,8 +121,13 @@ class MainViewController: UIViewController {
         RFC3339DateFormatter.locale = Locale(identifier: "ru_RU")
         RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
         RFC3339DateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-        let date = RFC3339DateFormatter.date(from: str)
-        return date
+        if let date = RFC3339DateFormatter.date(from: str) {
+            return date
+        } else {
+             RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            let date = RFC3339DateFormatter.date(from: str)
+            return date
+        }
     }
     
     func printDate(dateBegin: Date, dateEnd: Date) {
@@ -342,20 +347,15 @@ class MainViewController: UIViewController {
             if let epicUserStoriesJSON = epicUserStoriesJSON?.value {
                 print(epicUserStoriesJSON.count)
                 for epicUserStoryJSON in epicUserStoriesJSON {
-                                        if epicUserStoryJSON.id == "b39bd526-be33-11e7-a051-0050568d26bf" {
-                                            print(epicUserStoryJSON.title)
-                                        }
+//                                        if epicUserStoryJSON.id == "748e0144-bfa9-11e7-a051-0050568d26bf" {
+//                                            print(epicUserStoryJSON.title)
+//                                        }
                     
                     if let tfsUrl = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
                         if tfsUrl.valueId.hasPrefix("http://tfs:8080/tfs/DIT/MAIN-BACKLOG") {
                             continue
                         }
-                    } else {
-                        if epicUserStoryJSON.eusType == "f357797e-bad3-11e7-acc5-0050568d26bf" {
-                            continue
-                        }
                     }
-                    
                     i += 1
                     addEpicUserStoryToCoreData(epicUserStory: epicUserStoryJSON, context: context)
                 }
@@ -893,6 +893,10 @@ class MainViewController: UIViewController {
         for businessValue in businessValues {
             addBusinessValueToCoreData(businessValue: businessValue)
         }
+        let businessValuesOld = propertyValues.filter({($0.property?.name ?? "") == "Оценка по методу Moscow"})
+        for businessValue in businessValuesOld {
+            addBusinessValueToCoreData(businessValue: businessValue)
+        }
         loadBusinessValuesFromCoreData(to: &self.businessValues, context: context)
     }
     
@@ -901,6 +905,11 @@ class MainViewController: UIViewController {
         if value.contains("[16]") { return Int32(16) }
         if value.contains("[32]") { return Int32(32) }
         if value.contains("[64]") { return Int32(64) }
+        if value.contains("[008]") { return Int32(8) }
+        if value.contains("[016]") { return Int32(16) }
+        if value.contains("[032]") { return Int32(32) }
+        if value.contains("[064]") { return Int32(64) }
+        if value.contains("[128]") { return Int32(128) }
         return Int32(128)
     }
     
@@ -1192,6 +1201,12 @@ class MainViewController: UIViewController {
                         result.businessValue = valueB
                     }
                 }
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка по методу Moscow"]}).first {
+                    if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
+                        result.businessValue = valueB
+                    }
+                }
+                
                 if let storePointAnaliticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка трудоемкости ОА"]}).first {
                     result.storePointsAnaliticPlane = storePointAnaliticNew.valueId
                     let storePointAnaliticNewArray = Array(storePointAnaliticNew.valueId)
@@ -1218,6 +1233,30 @@ class MainViewController: UIViewController {
                     result.storePointsDevPlane = storePointDeveloperNew.valueId
                 }
                 if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Гиперссылка на журнал ЭПИ"]}).first {
+                    result.tfsUrl = tfsUrl.valueId
+                    let tfsUrlArray = Array(tfsUrl.valueId)
+                    var tfsId: String = ""
+                    for i in (0..<tfsUrlArray.count).reversed() {
+                        if tfsUrlArray[i] != "/" {
+                            tfsId = String(tfsUrlArray[i]) + tfsId
+                        } else {
+                            break
+                        }
+                    }
+                    if tfsId.count > 10,
+                        let last = tfsId.components(separatedBy: "_workitems?id=").last,
+                        let first = last.components(separatedBy: "&_a=edit").first {
+                        tfsId = first
+                        
+                        
+                    }
+                    if let tfsId = Int32(tfsId) {
+                        result.tfsId = tfsId
+                        
+                    }
+                }
+                
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
                     result.tfsUrl = tfsUrl.valueId
                     let tfsUrlArray = Array(tfsUrl.valueId)
                     var tfsId: String = ""
@@ -1291,6 +1330,11 @@ class MainViewController: UIViewController {
                     }
                 }
                 if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ценность"]}).first {
+                    if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
+                        property.setValue(valueB, forKey: "businessValue")
+                    }
+                }
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка по методу Moscow"]}).first {
                     if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
                         property.setValue(valueB, forKey: "businessValue")
                     }
@@ -1394,6 +1438,7 @@ class MainViewController: UIViewController {
         } catch let error as NSError {
             print(error.localizedDescription)
         }
+        epicUserStories = epicUserStories.sorted(by: {$0.dateCreate! < $1.dateCreate!})
     }
     
     func fillDirectionByProductOwner() {

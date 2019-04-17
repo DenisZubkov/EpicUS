@@ -22,6 +22,7 @@ class EUSListTableViewCell: UITableViewCell {
     @IBOutlet weak var storePointsPlan: UILabel!
     @IBOutlet weak var storePointsDevFact: UILabel!
     @IBOutlet weak var storePointsFact: UILabel!
+    @IBOutlet weak var tfsIdLabel: UILabel!
     
     @IBOutlet weak var storePointsAnaliticFact: UILabel!
     
