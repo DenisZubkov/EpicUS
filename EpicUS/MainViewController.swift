@@ -58,7 +58,7 @@ class MainViewController: UIViewController {
                 loadType = .none
             }
         } else {
-            loadType = .none
+            loadType = .first
             //UserDefaults.standard.set(date, forKey: "ModifyDate")
         }
         
@@ -347,12 +347,27 @@ class MainViewController: UIViewController {
             if let epicUserStoriesJSON = epicUserStoriesJSON?.value {
                 print(epicUserStoriesJSON.count)
                 for epicUserStoryJSON in epicUserStoriesJSON {
-//                                        if epicUserStoryJSON.id == "748e0144-bfa9-11e7-a051-0050568d26bf" {
-//                                            print(epicUserStoryJSON.title)
-//                                        }
+                                        if epicUserStoryJSON.id == "b76b5010-d598-11e7-a051-0050568d26bf" {
+                                            print(epicUserStoryJSON.title)
+                                        }
                     
-                    if let tfsUrl = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
-                        if tfsUrl.valueId.hasPrefix("http://tfs:8080/tfs/DIT/MAIN-BACKLOG") {
+                    if epicUserStoryJSON.eusType == "f357797e-bad3-11e7-acc5-0050568d26bf" {
+                        
+                        if let tfsUrl = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
+                            if tfsUrl.valueId.hasPrefix("http://tfs:8080/tfs/DIT/MAIN-BACKLOG") {
+                                continue
+                            }
+                        } else {
+                            continue
+                        }
+                        //                    if epicUserStoryJSON.id == "f152880f-ca94-11e7-a051-0050568d26bf" {
+                        //                        print("ssss")
+                        //                    }
+                        if let stage = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Решение"]}).first {
+                            if stage.valueId == "6dd39d53-bad8-11e7-acc5-0050568d26bf" ||  stage.valueId == "73d55f9d-bad8-11e7-acc5-0050568d26bf" {
+                                continue
+                            }
+                        } else {
                             continue
                         }
                     }
@@ -1403,7 +1418,29 @@ class MainViewController: UIViewController {
                     }
                     
                 }
-                
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
+                    property.setValue(tfsUrl.valueId, forKey: "tfsUrl")
+                    let tfsUrlArray = Array(tfsUrl.valueId)
+                    var tfsId: String = ""
+                    for i in (0..<tfsUrlArray.count).reversed() {
+                        if tfsUrlArray[i] != "/" {
+                            tfsId = String(tfsUrlArray[i]) + tfsId
+                        } else {
+                            break
+                        }
+                    }
+                    if tfsId.count > 10,
+                        let last = tfsId.components(separatedBy: "_workitems?id=").last,
+                        let first = last.components(separatedBy: "&_a=edit").first {
+                        tfsId = first
+                        
+                        
+                    }
+                    if let tfsId = Int32(tfsId) {
+                        property.setValue(tfsId, forKey: "tfsId")
+                        
+                    }
+                }
                 property.setValue(convertString1cToDate(from: epicUserStory.dateCreate), forKey: "dateCreate")
                 property.setValue(convertString1cToDate(from: epicUserStory.dateRegistration), forKey: "dateBegin")
                 property.setValue(epicUserStory.deletionMark, forKey: "noShow")
