@@ -13,7 +13,7 @@ class DataProvider {
     var dataCache = NSCache<NSString, NSData>()
     var globalSettings = GlobalSettings()
     
-    func getUrlComponents(server: ODataServer, query: ODataQuery, format: queryResultFormat) -> URLComponents {
+    func getUrlComponents(server: ODataServer, query: ODataQuery, format: QueryResultFormat) -> URLComponents {
         var urlComponents = URLComponents()
         urlComponents.scheme = server.scheme
         urlComponents.host = server.host
@@ -50,8 +50,8 @@ class DataProvider {
             break
         }
         urlComponents.queryItems = queryItems
-//        urlComponents.password = "!den20zu10"
-//        urlComponents.user = "zubkoff"
+        urlComponents.user = globalSettings.login
+        urlComponents.password = globalSettings.password
         return urlComponents
     }
     

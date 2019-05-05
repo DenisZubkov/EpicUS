@@ -14,6 +14,14 @@ class EUSTableViewController: UITableViewController {
     let globalSettings = GlobalSettings()
     let rootViewController = AppDelegate.shared.rootViewController
     
+    @IBAction func send1cButton(_ sender: Any) {
+        
+        for eus in rootViewController.epicUserStories {
+            rootViewController.createPatchQuery(eus: eus)
+            
+        }
+        
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -28,6 +36,7 @@ class EUSTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "EUSListSell", for: indexPath) as! EUSListTableViewCell
         let eus = rootViewController.epicUserStories[indexPath.row]
+        cell.eus = eus
         cell.nameLabel.text = eus.name
         cell.number1CLabel.text = eus.num
         cell.valueLabel.text = "\(eus.businessValue?.value ?? 128)"

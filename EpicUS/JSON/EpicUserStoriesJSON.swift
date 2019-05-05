@@ -10,7 +10,7 @@ import Foundation
 
 struct EpicUserStoriesJSON: Codable {
     let odataMetadata: String
-    let value: [Value]
+    var value: [Value]
     
     enum CodingKeys: String, CodingKey {
         case odataMetadata = "odata.metadata"
@@ -23,7 +23,7 @@ struct EpicUserStoriesJSON: Codable {
         let dateCreate, dateRegistration, title, productOwnerId: String
         let dept, num, content: String
         let deletionMark: Bool
-        let дополнительныеРеквизиты: [ДополнительныеРеквизиты]
+        var дополнительныеРеквизиты: [ДополнительныеРеквизиты]
         
         enum CodingKeys: String, CodingKey {
             case id = "Ref_Key"
@@ -45,7 +45,7 @@ struct EpicUserStoriesJSON: Codable {
     
     struct ДополнительныеРеквизиты: Codable {
         let id, lineNumber, parameterId: String
-        let valueId, valueType, value: String
+        var valueId, valueType, value: String
         
         
         enum CodingKeys: String, CodingKey {

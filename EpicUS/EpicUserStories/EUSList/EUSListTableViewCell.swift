@@ -9,6 +9,10 @@
 import UIKit
 
 class EUSListTableViewCell: UITableViewCell {
+    
+    var eus: EpicUserStory?
+    let globalSettings = GlobalSettings()
+    let rootViewController = AppDelegate.shared.rootViewController
 
     @IBOutlet weak var nameLabel: UILabel!
     @IBOutlet weak var number1CLabel: UILabel!
@@ -26,6 +30,12 @@ class EUSListTableViewCell: UITableViewCell {
     
     @IBOutlet weak var storePointsAnaliticFact: UILabel!
     
+    @IBAction func sendDataTo1CButton(_ sender: UIButton) {
+        
+        guard let sendEus = eus else { return }
+        rootViewController.createPatchQuery(eus: sendEus)
+        
+    }
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

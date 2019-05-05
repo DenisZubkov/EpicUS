@@ -37,6 +37,9 @@ class MainViewController: UIViewController {
     var treeWorkItems: [TreeWorkItem] = []
     var savedModifyDate: Date = Date() - 1000000000
     var loadType: LoadType = .first
+    var states: [State] = []
+    var quotas: [Quota] = []
+    
     
     
     var date = Date()
@@ -58,7 +61,7 @@ class MainViewController: UIViewController {
                 loadType = .none
             }
         } else {
-            loadType = .first
+            loadType = .none
             //UserDefaults.standard.set(date, forKey: "ModifyDate")
         }
         
@@ -91,19 +94,22 @@ class MainViewController: UIViewController {
     // MARK: COMMON METODS
     
     func loadAllDataFromCoreData() {
-        loadDirectionsFromCoreData(to: &directions, context: context)
-        loadDeptsFromCoreData(to: &depts, context: context)
-        loadTeamsFromCoreData(to: &teams, context: context)
-        loadUsersFromCoreData(to: &users, context: context)
-        loadTacticsFromCoreData(to: &tactics, context: context)
-        loadTypeTeamsFromCoreData(to: &typeTeams, context: context)
-        loadCategoriesFromCoreData(to: &categories, context: context)
-        loadPropertiesFromCoreData(to: &properties, context: context)
-        loadBusinessValuesFromCoreData(to: &businessValues, context: context)
-        loadPropertyValuesFromCoreData(to: &propertyValues, context: context)
-        loadEpicUserStoriesFromCoreData(to: &epicUserStories, context: context)
-        loadStrategicTargetsFromCoreData(to: &strategicTargets, context: context)
-        loadTreeWorkItemsFromCoreData(to: &treeWorkItems, context: context)
+        directions = loadArrayFromCoreData(object: "Direction", context: context)
+        directions = directions.sorted(by: {$0.ord < $1.ord} )
+        depts = loadArrayFromCoreData(object: "Dept", context: context)
+        teams = loadArrayFromCoreData(object: "Team", context: context)
+        users = loadArrayFromCoreData(object: "User", context: context)
+        tactics = loadArrayFromCoreData(object: "Tactic", context: context)
+        typeTeams = loadArrayFromCoreData(object: "TypeTeam", context: context)
+        categories = loadArrayFromCoreData(object: "Category", context: context)
+        properties = loadArrayFromCoreData(object: "Property", context: context)
+        businessValues = loadArrayFromCoreData(object: "BusinessValue", context: context)
+        propertyValues = loadArrayFromCoreData(object: "PropertyValue", context: context)
+        epicUserStories = loadArrayFromCoreData(object: "EpicUserStory", context: context)
+        strategicTargets = loadArrayFromCoreData(object: "StrategicTarget", context: context)
+        treeWorkItems = loadArrayFromCoreData(object: "TreeWorkItem", context: context)
+        states = loadArrayFromCoreData(object: "State", context: context)
+        quotas = loadArrayFromCoreData(object: "Quota", context: context)
     }
     
     func convertString1cToDate(from dateString: String?) -> Date? {
@@ -111,6 +117,7 @@ class MainViewController: UIViewController {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         dateFormatter.locale = Locale.init(identifier: "ru_RU")
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
         str = str.replacingOccurrences(of: "T", with: " ")
         return dateFormatter.date(from: str)
     }
@@ -127,6 +134,24 @@ class MainViewController: UIViewController {
              RFC3339DateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
             let date = RFC3339DateFormatter.date(from: str)
             return date
+        }
+    }
+    
+    func saveDataToFile(fileName: String, fileExt: String, data: Data) -> Bool{
+        let DocumentDirURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        
+        let fileURL = DocumentDirURL.appendingPathComponent(fileName).appendingPathExtension(fileExt)
+        if let dataString = String(data: data, encoding: .utf8) {
+            
+            do {
+                try dataString.write(to: fileURL, atomically: true, encoding: .utf8)
+                return true
+            } catch {
+                print("failed with error: \(error)")
+                return false
+            }
+        } else {
+            return false
         }
     }
     
@@ -156,36 +181,41 @@ class MainViewController: UIViewController {
         return nil
     }
     
+    func loadArrayFromCoreData<T>(object: String, context: NSManagedObjectContext) -> [T] {
+        let requestSavedLevel = NSFetchRequest<NSFetchRequestResult>(entityName: object)
+        do {
+            if let results = try context.fetch(requestSavedLevel) as? [T] {
+                return results
+            } else {
+                return []
+            }
+            
+        }
+        catch {
+            print("\n Error on \(#function): \(error)")
+            return []
+        }
+    }
+     
     
-    func getDataJSON(queries: [ODataQuery], i: inout Int) {
-        let urlComponents = self.dataProvider.getUrlComponents(server: queries[i].server, query: queries[i], format: .json)
-        guard let url = urlComponents.url else { return }
-        var index = i
-        self.dataProvider.downloadData(url: url) { data in
-            if let data = data {
-                //                print(data)
-                //                print(self.queries[index].table)
-                UserDefaults.standard.set(data, forKey: "\(index)")
-                index += 1
-                if index < queries.count {
-                    DispatchQueue.main.async {
-                        let progress: Float =  Float(index) / (Float(queries.count) * Float(1.5))
-                        self.loadProgressView.progress = progress
-                    }
-                    self.getDataJSON(queries: queries, i: &index)
-                } else {
-                    self.printDate(dateBegin: self.date, dateEnd: Date())
-                    self.ParseJSON(index: index)
-                    self.printDate(dateBegin: self.date, dateEnd: Date())
-                }
-                
+    func loadFromFile(fileName: String, fileExtenition: String) -> Data? {
+        if let path = Bundle.main.path(forResource: fileName, ofType: fileExtenition) {
+            let fileManager = FileManager()
+            let exists = fileManager.fileExists(atPath: path)
+            if(exists){
+                let content = fileManager.contents(atPath: path)
+                return content
             }
         }
+        return nil
     }
     
     
     
-    func getDataJSONFromTFS(queriesTFS: [ODataQuery], i: inout Int, type: queryResultFormat) {
+    
+    
+    
+    func getDataJSONFromTFS(queriesTFS: [ODataQuery], i: inout Int, type: QueryResultFormat) {
         var urlComponents = self.dataProvider.getUrlComponents(server: queriesTFS[i].server, query: queriesTFS[i], format: type)
         urlComponents.user = "zubkoff"
         urlComponents.password = "!den20zu10"
@@ -196,6 +226,7 @@ class MainViewController: UIViewController {
             if let data = data {
                 
                 UserDefaults.standard.set(data, forKey: "\(index)")
+                let _ = self.saveDataToFile(fileName: "\(index) \(type)", fileExt: "json", data: data)
                 index += 1
                 if index < queriesTFS.count {
                     DispatchQueue.main.async {
@@ -206,7 +237,7 @@ class MainViewController: UIViewController {
                 } else {
                     self.printDate(dateBegin: self.date, dateEnd: Date())
                     if type == .json {
-                        self.ParseJSON(index: index)
+                        self.parceJSONFrom1C(index: index)
                     } else {
                         self.parseJSONFromTFS(queries: queriesTFS)
                     }
@@ -232,8 +263,14 @@ class MainViewController: UIViewController {
         performSegue(withIdentifier: "TabBarSegue", sender: nil)
     }
     
-    func ParseJSON(index: Int) {
+
+    
+    func parceJSONFrom1C(index: Int) {
+        
+        // Шаг для ProgressView
         let step = Float(1) / (Float(queries.count) * Float(1.5))
+        
+        // Parce Parameters
         if let nsData = UserDefaults.standard.value(forKey: "0") as? NSData {
             let data = nsData as Data
             let parametersJSON: ParametersJSON? = self.getType(from: data)
@@ -241,7 +278,7 @@ class MainViewController: UIViewController {
                 for parameter in parameters {
                     addParameterToCoreData(parameter: parameter, context: context)
                 }
-                loadPropertiesFromCoreData(to: &properties, context: context)
+                self.properties = self.loadArrayFromCoreData(object: "Property", context: self.context)
                 print("Properties: \(self.properties.count)")
             }
         }
@@ -250,6 +287,8 @@ class MainViewController: UIViewController {
             self.loadProgressView.progress = progress
         }
         
+        
+        // Parce ParameterValues
         if let nsData = UserDefaults.standard.value(forKey: "1") as? NSData {
             let data = nsData as Data
             let parameterValuesJSON: ParameterValuesJSON? = self.getType(from: data)
@@ -257,35 +296,41 @@ class MainViewController: UIViewController {
                 for parameterValue in parameterValues {
                     addParameterValueToCoreData(parameterValue: parameterValue, context: context)
                 }
-                loadPropertyValuesFromCoreData(to: &propertyValues, context: context)
+                self.propertyValues = self.loadArrayFromCoreData(object: "PropertyValue", context: context)
                 print("PropertyValues: \(self.propertyValues.count)")
             }
         }
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         
-        
+        // StrategicTargets
         addStrategicTargetsToCoreData()
         print("StrategicTargets: \(self.strategicTargets.count)")
         print("Tactics: \(self.tactics.count)")
         
+        // Categories
         addCategoriesToCoreData()
         print("Categories: \(self.categories.count)")
         addBusinessValuesToCoreData()
         print("BusinessValues: \(self.businessValues.count)")
         
+        // Teams
         addTypeTeamsToCoreData(context: context)
-        loadTypeTeamsFromCoreData(to: &typeTeams, context: context)
+        typeTeams = loadArrayFromCoreData(object: "TypeTeam", context: context)
         print("TypeTeams: \(self.typeTeams.count)")
+        
+
+        
         
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         
+        
+        // Parce Depts
         if let nsData = UserDefaults.standard.value(forKey: "2") as? NSData {
             let data = nsData as Data
             let deptsJSON: DeptsJSON? = self.getType(from: data)
@@ -293,16 +338,17 @@ class MainViewController: UIViewController {
                 for dept in depts {
                     addDeptToCoreData(dept: dept, context: context)
                 }
-                loadDeptsFromCoreData(to: &self.depts, context: context)
+                self.depts = self.loadArrayFromCoreData(object: "Dept", context: self.context)
                 print("Depts: \(self.depts.count)")
             }
         }
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         
+        
+        //Parse UserGroups
         if let nsData = UserDefaults.standard.value(forKey: "3") as? NSData {
             let data = nsData as Data
             let userGroupsJSON: UserGroupsJSON? = self.getType(from: data)
@@ -310,36 +356,69 @@ class MainViewController: UIViewController {
                 for userGroup in userGroups {
                     addTeamToCoreData(userGroup: userGroup, context: context)
                 }
-                loadTeamsFromCoreData(to: &self.teams, context: context)
+                self.teams = self.loadArrayFromCoreData(object: "Team", context: self.context)
                 
                 print("Teams: \(self.teams.count)")
             }
         }
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         
         
+        // Parce Users
         if let nsData = UserDefaults.standard.value(forKey: "4") as? NSData {
             let data = nsData as Data
             let usersJSON: UsersJSON? = self.getType(from: data)
             if let users = usersJSON?.value {
                 addUserDataToCoreData(usersJSON: users, context: context)
-                loadUsersFromCoreData(to: &self.users, context: context)
+                self.users = self.loadArrayFromCoreData(object: "User", context: self.context)
                 print("Users: \(self.users.count)")
             }
         }
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         
-        addDirectionsToCoreData()
-        print("Directions: \(self.directions.count)")
+        // Parce Directions
+        if let nsData = UserDefaults.standard.value(forKey: "6") as? NSData {
+            let data = nsData as Data
+            let directionsJSON: DirectionsJSON? = self.getType(from: data)
+            if let directions = directionsJSON?.value {
+                for direction in directions {
+                    addDirectionToCoreData(direction: direction, context: context)
+                }
+                self.directions = self.loadArrayFromCoreData(object: "Direction", context: self.context)
+                
+                print("Directions: \(self.directions.count)")
+            }
+        }
+        DispatchQueue.main.async {
+            let progress = self.loadProgressView.progress + step
+            self.loadProgressView.progress = progress
+        }
         
+        // Parce Quotas
+        if let nsData = UserDefaults.standard.value(forKey: "7") as? NSData {
+            let data = nsData as Data
+            let quotasJSON: QuotasJSON? = self.getType(from: data)
+            if let quotas = quotasJSON?.value {
+                for quota in quotas {
+                    addQuotaToCoreData(quota: quota, context: context)
+                }
+                self.quotas = self.loadArrayFromCoreData(object: "Quota", context: self.context)
+                
+                print("Quotas: \(self.quotas.count)")
+            }
+        }
+        DispatchQueue.main.async {
+            let progress = self.loadProgressView.progress + step
+            self.loadProgressView.progress = progress
+        }
+        
+        // Parce epicUserStories
         if let nsData = UserDefaults.standard.value(forKey: "5") as? NSData {
             let data = nsData as Data
             let epicUserStoriesJSON: EpicUserStoriesJSON? = self.getType(from: data)
@@ -347,23 +426,15 @@ class MainViewController: UIViewController {
             if let epicUserStoriesJSON = epicUserStoriesJSON?.value {
                 print(epicUserStoriesJSON.count)
                 for epicUserStoryJSON in epicUserStoriesJSON {
-                                        if epicUserStoryJSON.id == "b76b5010-d598-11e7-a051-0050568d26bf" {
-                                            print(epicUserStoryJSON.title)
-                                        }
-                    
-                    if epicUserStoryJSON.eusType == "f357797e-bad3-11e7-acc5-0050568d26bf" {
-                        
-                        if let tfsUrl = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
+                   if epicUserStoryJSON.eusType == globalSettings.eusTypeDict[.eus18] {
+                        if let tfsUrl = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.eusUrl18]}).first {
                             if tfsUrl.valueId.hasPrefix("http://tfs:8080/tfs/DIT/MAIN-BACKLOG") {
                                 continue
                             }
                         } else {
                             continue
                         }
-                        //                    if epicUserStoryJSON.id == "f152880f-ca94-11e7-a051-0050568d26bf" {
-                        //                        print("ssss")
-                        //                    }
-                        if let stage = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Решение"]}).first {
+                       if let stage = epicUserStoryJSON.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.visa]}).first {
                             if stage.valueId == "6dd39d53-bad8-11e7-acc5-0050568d26bf" ||  stage.valueId == "73d55f9d-bad8-11e7-acc5-0050568d26bf" {
                                 continue
                             }
@@ -376,35 +447,16 @@ class MainViewController: UIViewController {
                 }
                 print(i)
                 self.epicUserStories.removeAll()
-                loadEpicUserStoriesFromCoreData(to: &self.epicUserStories, context: context)
-                //                for eus in self.epicUserStories {
-                //                    print(eus.name)
-                //                    print(" id:        \(eus.id)")
-                //                    print(" tactic:    \(eus.tactic?.name)")
-                //                    print(" category:  \(eus.category?.name)")
-                //                    print(" Value:     \(eus.businessValue?.name)")
-                //                    print(" direction: \(eus.direction?.name)")
-                //                    print(" dept:      \(eus.dept?.name)")
-                //                    print(" priority:  \(eus.priority)")
-                //                    print(" deathLine: \(eus.deathLine)")
-                //                    print(" productOw: \(eus.productOwner?.fio)")
-                //                    print(" tfs:       \(eus.tfsUrl)")
-                //                    print(" tfsId:     \(eus.tfsId)")
-                //                    print(" quart:     \(eus.quart)")
-                //                    print(" OA:        \(eus.storePointsAnaliticPlane)")
-                //                    print(" Dev:       \(eus.storePointsDevPlane)")
-                //                    print("")
-                //                }
-                print("EUS: \(self.epicUserStories.count)")
+                self.epicUserStories = self.loadArrayFromCoreData(object: "EpicUserStory", context: self.context)
+                epicUserStories = epicUserStories.sorted(by: {$0.dateCreate! < $1.dateCreate!})
+                print("EpicUserStories: \(self.epicUserStories.count)")
             }
         }
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
         }
         fillDirectionByProductOwner()
-        
         DispatchQueue.main.async {
             let progress = self.loadProgressView.progress + step
             self.loadProgressView.progress = progress
@@ -412,6 +464,11 @@ class MainViewController: UIViewController {
         
         addEUSFromTFS()
     }
+    
+    
+    
+    
+    
     
     //MARK: TREEWORKITEM
 
@@ -466,7 +523,7 @@ class MainViewController: UIViewController {
         
     }
     
-    func getTreeWorkItemsJSONFromTFS(level: Int32, queriesTFS: [ODataQuery], i: inout Int, type: queryResultFormat) {
+    func getTreeWorkItemsJSONFromTFS(level: Int32, queriesTFS: [ODataQuery], i: inout Int, type: QueryResultFormat) {
         var urlComponents = self.dataProvider.getUrlComponents(server: queriesTFS[i].server, query: queriesTFS[i], format: type)
         urlComponents.user = "zubkoff"
         urlComponents.password = "!den20zu10"
@@ -488,7 +545,7 @@ class MainViewController: UIViewController {
                     self.parseTreeWorkItemsJSONFromTFS(level: level, queries: queriesTFS)
                     
                     self.printDate(dateBegin: self.date, dateEnd: Date())
-                    self.loadTreeWorkItemsFromCoreData(to: &self.treeWorkItems, context: self.context)
+                    self.treeWorkItems = self.loadArrayFromCoreData(object: "TreeWorkItem", context: self.context)
                     for treeWorkItem in self.treeWorkItems {
                         print("\(treeWorkItem.level) \(treeWorkItem.parentId) \(treeWorkItem.id)")
                     }
@@ -558,15 +615,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadTreeWorkItemsFromCoreData(to treeWorkItems: inout [TreeWorkItem], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<TreeWorkItem> = TreeWorkItem.fetchRequest()
-        do {
-            treeWorkItems = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+
     
     func deleteTreeWorkItemsFromCoreData(context: NSManagedObjectContext) {
         treeWorkItems.removeAll()
@@ -622,15 +671,6 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadPropertiesFromCoreData(to properties: inout [Property], context: NSManagedObjectContext) {
-       
-        let fetchRequest: NSFetchRequest<Property> = Property.fetchRequest()
-        do {
-            properties = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-             print(error.localizedDescription)
-        }
-    }
     
     //MARK: PARAMETERS VALUE
     
@@ -674,15 +714,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadPropertyValuesFromCoreData(to propertyValues: inout [PropertyValue], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<PropertyValue> = PropertyValue.fetchRequest()
-        do {
-            propertyValues = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+    
     
     
     //MARK: STRATEGIC TARGETS
@@ -694,13 +726,13 @@ class MainViewController: UIViewController {
                 addStrategicTargetToCoreData(strategicTarget: strategicTarget)
             }
         }
-        loadStrategicTargetsFromCoreData(to: &self.strategicTargets, context: context)
+        self.strategicTargets = self.loadArrayFromCoreData(object: "StrategicTarget", context: self.context)
         for strategicTarget in strategicTargets {
             if !(strategicTarget.isFolder) {
                 addTacticsToCoreData(tactic: strategicTarget)
             }
         }
-        loadTacticsFromCoreData(to: &self.tactics, context: context)
+        self.tactics = self.loadArrayFromCoreData(object: "Tactic", context: self.context)
     }
     
 
@@ -733,15 +765,7 @@ class MainViewController: UIViewController {
         }
     }
 
-    func loadStrategicTargetsFromCoreData(to strategicTargets: inout [StrategicTarget], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<StrategicTarget> = StrategicTarget.fetchRequest()
-        do {
-            strategicTargets = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+    
     
     
     
@@ -782,15 +806,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadTacticsFromCoreData(to tactics: inout [Tactic], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<Tactic> = Tactic.fetchRequest()
-        do {
-            tactics = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+    
     
     //MARK: CATEGORIES
     
@@ -800,7 +816,7 @@ class MainViewController: UIViewController {
         for category in categories {
             addCategoryToCoreData(category: category)
         }
-        loadCategoriesFromCoreData(to: &self.categories, context: context)
+        self.categories = self.loadArrayFromCoreData(object: "Category", context: self.context)
     }
     
     func addCategoryToCoreData(category: PropertyValue) {
@@ -829,53 +845,38 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadCategoriesFromCoreData(to categories: inout [Category], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<Category> = Category.fetchRequest()
-        do {
-            categories = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+    
     
     //MARK: DIRECTIONS
     
-    func addDirectionsToCoreData() {
-        let directions = propertyValues.filter({($0.property?.name ?? "") == "Направление"})
-        for direction in directions {
-            addDirectionToCoreData(direction: direction)
-        }
-        loadDirectionsFromCoreData(to: &self.directions, context: context)
-    }
     
-    func addDirectionToCoreData(direction: PropertyValue) {
+    func addDirectionToCoreData(direction: DirectionsJSON.Value, context: NSManagedObjectContext) {
         let fetchRequest: NSFetchRequest<Direction> = Direction.fetchRequest()
-        guard let directionId = direction.id else { return }
-        fetchRequest.predicate = NSPredicate(format: "id == %@", directionId)
+        fetchRequest.predicate = NSPredicate(format: "id == %@", direction.id)
         do {
             let results = try context.fetch(fetchRequest)
             if let result = results.first {
-                result.name = direction.value
-                if let userId = globalSettings.headDirectionDict[directionId],
-                    let user = self.users.filter({$0.id == userId}).first {
-                        result.headDirection = user
+                result.name = direction.name
+                result.dataVersion = direction.dataVersion
+                if let ord = Int32(direction.ord) {
+                    result.ord = ord
                 }
-                if let tfsId = globalSettings.tfsDirectionDict[directionId] {
-                    result.tfsId = tfsId
+                result.small = direction.shortName
+                if let user = self.users.filter({$0.id == direction.userId}).first {
+                    result.headDirection = user
                 }
-                
             } else {
                 guard let entity =  NSEntityDescription.entity(forEntityName: "Direction", in: context) else { return }
                 let property = NSManagedObject(entity: entity, insertInto: context)
                 property.setValue(direction.id, forKey: "id")
-                property.setValue(direction.value, forKey: "name")
-                if let userId = globalSettings.headDirectionDict[directionId],
-                    let user = self.users.filter({$0.id == userId}).first {
-                        property.setValue(user, forKey: "headDirection")
+                property.setValue(direction.name, forKey: "name")
+                property.setValue(direction.dataVersion, forKey: "dataVersion")
+                if let ord = Int32(direction.ord) {
+                    property.setValue(ord, forKey: "ord")
                 }
-                if let tfsId = globalSettings.tfsDirectionDict[directionId] {
-                    property.setValue(tfsId, forKey: "tfsId")
+                property.setValue(direction.shortName, forKey: "small")
+                if let user = self.users.filter({$0.id == direction.userId}).first {
+                    property.setValue(user, forKey: "headDirection")
                 }
             }
         } catch let error as NSError {
@@ -890,16 +891,40 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadDirectionsFromCoreData(to directions: inout [Direction], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<Direction> = Direction.fetchRequest()
+
+    //MARK: QUOTAS
+    
+
+    func addQuotaToCoreData(quota: QuotasJSON.Value, context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<Quota> = Quota.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "direction.id == %@", quota.directionId)
         do {
-            directions = try context.fetch(fetchRequest)
+            let results = try context.fetch(fetchRequest)
+            guard let date = convertString1cToDate(from: quota.quart) else { return }
+            if let result = results.filter({$0.quart == date}).first {
+                result.storePointAnaliticPlan = quota.storePointAnaliticPlan
+                result.storePointDevPlan = quota.storePointDevPlan
+            } else {
+                guard let entity =  NSEntityDescription.entity(forEntityName: "Quota", in: context) else { return }
+                let property = NSManagedObject(entity: entity, insertInto: context)
+                property.setValue(date, forKey: "quart")
+                property.setValue(quota.storePointDevPlan, forKey: "storePointDevPlan")
+                property.setValue(quota.storePointAnaliticPlan, forKey: "storePointAnaliticPlan")
+                if let direction = self.directions.filter({$0.id == quota.directionId}).first {
+                    property.setValue(direction, forKey: "direction")
+                }
+            }
         } catch let error as NSError {
             print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
         }
     }
-
     
     //MARK: BUSINESS VALUES
     
@@ -912,7 +937,7 @@ class MainViewController: UIViewController {
         for businessValue in businessValuesOld {
             addBusinessValueToCoreData(businessValue: businessValue)
         }
-        loadBusinessValuesFromCoreData(to: &self.businessValues, context: context)
+        self.businessValues = self.loadArrayFromCoreData(object: "BusinessValue", context: self.context)
     }
     
     func getBusinessValueInt32(value: String) -> Int32 {
@@ -960,15 +985,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadBusinessValuesFromCoreData(to businessValues: inout [BusinessValue], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<BusinessValue> = BusinessValue.fetchRequest()
-        do {
-            businessValues = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+   
     
     
     //MARK: DEPTS
@@ -1010,15 +1027,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadDeptsFromCoreData(to depts: inout [Dept], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<Dept> = Dept.fetchRequest()
-        do {
-            depts = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+   
     
     
     //MARK: TYPE TEAMS
@@ -1052,15 +1061,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadTypeTeamsFromCoreData(to typeTeams: inout [TypeTeam], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<TypeTeam> = TypeTeam.fetchRequest()
-        do {
-            typeTeams = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+   
     
     
     //MARK: TEAMS
@@ -1099,16 +1100,39 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadTeamsFromCoreData(to teams: inout [Team], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<Team> = Team.fetchRequest()
+
+    
+  
+    
+    // MARK: State
+    
+    func addStateToCoreData(name: String) {
+        let fetchRequest: NSFetchRequest<State> = State.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "name == %@", name)
         do {
-            teams = try context.fetch(fetchRequest)
+            let results = try context.fetch(fetchRequest)
+            if let result = results.first {
+                result.name = name
+            } else {
+                let id = states.count + 1
+                guard let entity =  NSEntityDescription.entity(forEntityName: "State", in: context) else { return }
+                let property = NSManagedObject(entity: entity, insertInto: context)
+                property.setValue(id, forKey: "id")
+                property.setValue(name, forKey: "name")
+            }
         } catch let error as NSError {
             print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
         }
     }
     
+ 
     
     //MARK: USERS
     
@@ -1172,15 +1196,7 @@ class MainViewController: UIViewController {
         }
     }
     
-    func loadUsersFromCoreData(to users: inout [User], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
-        do {
-            users = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
+
     
     
     //MARK: EPIC USER STORIES
@@ -1196,33 +1212,38 @@ class MainViewController: UIViewController {
                 result.name = epicUserStory.title
                 result.num = epicUserStory.num
                 result.dataVersion = epicUserStory.dataVersion
-                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Направление"]}).first {
+                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.direction19]}).first {
                     if let direction = directions.filter({$0.id == directionNew.valueId}).first {
                        result.direction = direction
                     }
                 }
-                if let categoryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Категория"]}).first {
+                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.direction18]}).first {
+                    if let direction = directions.filter({$0.id == directionNew.valueId}).first {
+                        result.direction = direction
+                    }
+                }
+                if let categoryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.category]}).first {
                     if let category = categories.filter({$0.id == categoryNew.valueId}).first {
                         result.category = category
                     }
                 }
-                if let tacticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Тактика"]}).first {
+                if let tacticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.tactic]}).first {
                     if let tactic = tactics.filter({$0.id == tacticNew.valueId}).first {
                         result.tactic = tactic
                     }
                 }
-                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ценность"]}).first {
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.businessValue19]}).first {
                     if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
                         result.businessValue = valueB
                     }
                 }
-                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка по методу Moscow"]}).first {
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.businessValue18]}).first {
                     if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
                         result.businessValue = valueB
                     }
                 }
                 
-                if let storePointAnaliticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка трудоемкости ОА"]}).first {
+                if let storePointAnaliticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.storePointsAnaliticPlan]}).first {
                     result.storePointsAnaliticPlane = storePointAnaliticNew.valueId
                     let storePointAnaliticNewArray = Array(storePointAnaliticNew.valueId)
                     var storePoint: String = ""
@@ -1244,10 +1265,10 @@ class MainViewController: UIViewController {
                     }
                     
                 }
-                if let storePointDeveloperNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка трудоемкости разработки"]}).first {
+                if let storePointDeveloperNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.storePointsDevPlan]}).first {
                     result.storePointsDevPlane = storePointDeveloperNew.valueId
                 }
-                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Гиперссылка на журнал ЭПИ"]}).first {
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.eusUrl19]}).first {
                     result.tfsUrl = tfsUrl.valueId
                     let tfsUrlArray = Array(tfsUrl.valueId)
                     var tfsId: String = ""
@@ -1271,7 +1292,7 @@ class MainViewController: UIViewController {
                     }
                 }
                 
-                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.eusUrl18]}).first {
                     result.tfsUrl = tfsUrl.valueId
                     let tfsUrlArray = Array(tfsUrl.valueId)
                     var tfsId: String = ""
@@ -1295,17 +1316,17 @@ class MainViewController: UIViewController {
                     }
                 }
                 
-                if let quartNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Квартал"]}).first {
+                if let quartNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.quart]}).first {
                     result.quart = quartNew.valueId
                     
                 }
                 
-                if let deathLineNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Дедлайн"]}).first {
+                if let deathLineNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.deathline]}).first {
                     result.deathLine = convertString1cToDate(from: deathLineNew.valueId)
                     
                 }
                 
-                if let priotiryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Приоритет"]}).first {
+                if let priotiryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.priority]}).first {
                     if let priority = Int32(priotiryNew.valueId) {
                         result.priority = priority
                     }
@@ -1329,32 +1350,37 @@ class MainViewController: UIViewController {
                 property.setValue(epicUserStory.title, forKey: "name")
                 property.setValue(epicUserStory.num, forKey: "num")
                 property.setValue(epicUserStory.dataVersion, forKey: "dataVersion")
-                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Направление"]}).first {
+                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.direction19]}).first {
                     if let direction = directions.filter({$0.id == directionNew.valueId}).first {
                         property.setValue(direction, forKey: "direction")
                     }
                 }
-                if let categoryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Категория"]}).first {
+                if let directionNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.direction18]}).first {
+                    if let direction = directions.filter({$0.id == directionNew.valueId}).first {
+                        property.setValue(direction, forKey: "direction")
+                    }
+                }
+                if let categoryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.category]}).first {
                     if let category = categories.filter({$0.id == categoryNew.valueId}).first {
                         property.setValue(category, forKey: "category")
                     }
                 }
-                if let tacticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Тактика"]}).first {
+                if let tacticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.tactic]}).first {
                     if let tactic = tactics.filter({$0.id == tacticNew.valueId}).first {
                         property.setValue(tactic, forKey: "tactic")
                     }
                 }
-                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ценность"]}).first {
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.businessValue19]}).first {
                     if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
                         property.setValue(valueB, forKey: "businessValue")
                     }
                 }
-                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка по методу Moscow"]}).first {
+                if let valueNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.businessValue18]}).first {
                     if let valueB = businessValues.filter({$0.id == valueNew.valueId}).first {
                         property.setValue(valueB, forKey: "businessValue")
                     }
                 }
-                if let storePointAnaliticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка трудоемкости ОА"]}).first {
+                if let storePointAnaliticNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.storePointsAnaliticPlan]}).first {
                     property.setValue(storePointAnaliticNew.valueId, forKey: "storePointsAnaliticPlane")
                     let storePointAnaliticNewArray = Array(storePointAnaliticNew.valueId)
                     var storePoint: String = ""
@@ -1376,28 +1402,28 @@ class MainViewController: UIViewController {
                     }
                 }
                 
-                if let storePointDeveloperNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Оценка трудоемкости разработки"]}).first {
+                if let storePointDeveloperNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.storePointsDevPlan]}).first {
                     property.setValue(storePointDeveloperNew.valueId, forKey: "storePointsDevPlane")
 
                 }
                 
-                if let quartNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Квартал"]}).first {
+                if let quartNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.quart]}).first {
                     property.setValue(quartNew.valueId, forKey: "quart")
                     
                 }
                 
-                if let deathLineNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Дедлайн"]}).first {
+                if let deathLineNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.deathline]}).first {
                     property.setValue(convertString1cToDate(from: deathLineNew.valueId), forKey: "deathLine")
                     
                 }
                 
-                if let priotiryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Приоритет"]}).first {
+                if let priotiryNew = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.priority]}).first {
                     if let priority = Int32(priotiryNew.valueId) {
                         property.setValue(priority, forKey: "priority")
                     }
                 }
                 
-                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Гиперссылка на журнал ЭПИ"]}).first {
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.eusUrl19]}).first {
                     property.setValue(tfsUrl.valueId, forKey: "tfsUrl")
                     let tfsUrlArray = Array(tfsUrl.valueId)
                     var tfsId: String = ""
@@ -1418,7 +1444,7 @@ class MainViewController: UIViewController {
                     }
                     
                 }
-                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict["Ссылка на ЭПИ в журнале"]}).first {
+                if let tfsUrl = epicUserStory.дополнительныеРеквизиты.filter({$0.parameterId == globalSettings.parameterDict[.eusUrl18]}).first {
                     property.setValue(tfsUrl.valueId, forKey: "tfsUrl")
                     let tfsUrlArray = Array(tfsUrl.valueId)
                     var tfsId: String = ""
@@ -1466,17 +1492,7 @@ class MainViewController: UIViewController {
     
     
     
-    func loadEpicUserStoriesFromCoreData(to epicUserStories: inout [EpicUserStory], context: NSManagedObjectContext) {
-        
-        let fetchRequest: NSFetchRequest<EpicUserStory> = EpicUserStory.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "noShow = FALSE")
-        do {
-            epicUserStories = try context.fetch(fetchRequest)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-        epicUserStories = epicUserStories.sorted(by: {$0.dateCreate! < $1.dateCreate!})
-    }
+
     
     func fillDirectionByProductOwner() {
         for eus in epicUserStories {
@@ -1521,6 +1537,19 @@ class MainViewController: UIViewController {
             if let result = results.first {
                 result.tfsWorkItemType = workItem.fields.workItemType
                 result.tfsState = workItem.fields.state
+                if let state = states.filter({$0.name == workItem.fields.state}).first {
+                    
+                    result.state = state
+                } else {
+                    if let state = workItem.fields.state {
+                        addStateToCoreData(name: state)
+                        self.states = self.loadArrayFromCoreData(object: "State", context: self.context)
+                        if let state = states.filter({$0.name == workItem.fields.state}).first {
+                            result.state = state
+                        }
+                    }
+                }
+                
                 result.tfsProductOwner = workItem.fields.productOwner
                 result.tfsDateCreate = convertStringTFSToDate(from: workItem.fields.createdDate)
                 result.tfsTitle = workItem.fields.title
@@ -1554,7 +1583,6 @@ class MainViewController: UIViewController {
                 if let value = workItem.fields.storePointsDevPlan {
                     result.tfsStorePointDevPlan = Double(value)
                 }
-                print(result.tfsId)
                 for strUrl in workItem.relations {
                     if strUrl.rel == "System.LinkTypes.Hierarchy-Reverse" {
                         addProductToCoreData(context: context)
@@ -1580,10 +1608,111 @@ class MainViewController: UIViewController {
     }
     
     func addProductToCoreData(context: NSManagedObjectContext) {
-        print("addProduct")
+       
     }
     
     func addUserStoryUrlToCoreData(context: NSManagedObjectContext) {
-        print("addUserStoryUrl")
+        
     }
+    
+    func createPatchQuery(eus: EpicUserStory) {
+        guard let eusId = eus.id else { return }
+        let query = ODataQuery.init(server: globalSettings.server1C,
+                                table: "Catalog_ВнутренниеДокументы/",
+                                filter: "Ref_Key eq guid'\(eusId)'",
+                                select: "Ref_Key, ВидДокумента_Key, DataVersion, Description, ВопросДеятельности_Key, ДатаСоздания, ДатаРегистрации, Заголовок, Подготовил_Key, Подразделение_Key, РегистрационныйНомер, Содержание, ДополнительныеРеквизиты, DeletionMark",
+                                orderBy: nil,
+                                id: nil)
+        var urlComponents = self.dataProvider.getUrlComponents(server: query.server, query: query, format: .json)
+        urlComponents.user = "zubkoff"
+        urlComponents.password = "!den20zu10"
+        guard let url = urlComponents.url else { return }
+
+        self.dataProvider.downloadDataFromTFS(url: url) { data in
+            if let data = data {
+                let dataStr1 = String(decoding: data, as: UTF8.self)
+                print(dataStr1)
+                var epicUserStoriesJSON: EpicUserStoriesJSON? = self.getType(from: data)
+                if let epicUserStoryJSON = epicUserStoriesJSON?.value.first {
+                    let parameters = epicUserStoryJSON.дополнительныеРеквизиты
+                    let currentType = epicUserStoryJSON.eusType ==  self.globalSettings.eusTypeDict[.eus19]
+                    let storePointsAnaliticFact: TypeParameters = currentType ? .storePointsAnaliticFact19 : .storePointsAnaliticFact18
+                    guard let pIdOA = self.globalSettings.parameterDict[storePointsAnaliticFact] else { return }
+                    let storePointsDevFact: TypeParameters = currentType ? .storePointsDevFact19 : .storePointsDevFact18
+                    guard let pIdORPO = self.globalSettings.parameterDict[storePointsDevFact] else { return }
+                    guard let pIdStatus = self.globalSettings.parameterDict[.visa] else { return }
+                    var haveParemeter = [pIdOA : false, pIdORPO : false, pIdStatus : false]
+                    guard let id = parameters.first?.id else { return }
+                    var lineNumber: Int = 0
+                    for i in 0..<parameters.count {
+                        if let ln = Int(parameters[i].lineNumber), ln > lineNumber {
+                            lineNumber = ln
+                        }
+                        if parameters[i].parameterId == pIdOA {
+                            epicUserStoriesJSON?.value[0].дополнительныеРеквизиты[i].valueId = String(eus.tfsStorePointAnaliticFact)
+                            haveParemeter[pIdOA] = true
+                        }
+                        if parameters[i].parameterId == pIdORPO {
+                            epicUserStoriesJSON?.value[0].дополнительныеРеквизиты[i].valueId = String(eus.tfsStorePointDevFact)
+                            haveParemeter[pIdORPO] = true
+                        }
+                        if parameters[i].parameterId == pIdStatus && eus.state?.name == "Выполнено" {
+                            epicUserStoriesJSON?.value[0].дополнительныеРеквизиты[i].valueId = "Реализована"
+                            haveParemeter[pIdStatus] = true
+                        }
+                    }
+                    if !haveParemeter[pIdOA]! {
+                        lineNumber += 1
+                        let lnString = String(lineNumber)
+                        epicUserStoriesJSON?.value[0].дополнительныеРеквизиты.append(EpicUserStoriesJSON.ДополнительныеРеквизиты(id: id, lineNumber: lnString, parameterId: pIdOA, valueId: String(eus.tfsStorePointAnaliticFact), valueType: "Edm.Double", value: ""))
+                    }
+                    if !haveParemeter[pIdORPO]! {
+                        lineNumber += 1
+                        let lnString = String(lineNumber)
+                        epicUserStoriesJSON?.value[0].дополнительныеРеквизиты.append(EpicUserStoriesJSON.ДополнительныеРеквизиты(id: id, lineNumber: lnString, parameterId: pIdORPO, valueId: String(eus.tfsStorePointDevFact), valueType: "Edm.Double", value: ""))
+                    }
+                    if !haveParemeter[pIdStatus]! {
+                        lineNumber += 1
+                        let lnString = String(lineNumber)
+                        epicUserStoriesJSON?.value[0].дополнительныеРеквизиты.append(EpicUserStoriesJSON.ДополнительныеРеквизиты(id: id, lineNumber: lnString, parameterId: pIdStatus, valueId: "Реализована", valueType: "StandardODATA.СостоянияЭПИ", value: ""))
+                    }
+                    let query = ODataQuery.init(server: self.globalSettings.server1C,
+                                                table: "Catalog_ВнутренниеДокументы('\(eusId)')",
+                                                filter: nil,
+                        select: nil,
+                        orderBy: nil,
+                        id: nil)
+                    var urlComponents = self.dataProvider.getUrlComponents(server: query.server, query: query, format: .json)
+                    urlComponents.user = "zubkoff"
+                    urlComponents.password = "!den20zu10"
+                    guard let url = urlComponents.url else { return }
+                    var request = URLRequest(url: url)
+                    request.httpMethod = "PATCH"
+                    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+                    let encoder = JSONEncoder()
+                    guard let httpBody = try? encoder.encode(epicUserStoriesJSON?.value[0]) else { return }
+                    let dataStr = String(decoding: httpBody, as: UTF8.self)
+                    print(dataStr)
+                    
+                    request.httpBody = httpBody
+                    let session = URLSession.shared
+                    session.dataTask(with: request) { (data, response, error) in
+                        
+                        guard let response = response, let data = data else { return }
+                        
+                        print(response)
+                        
+                        do {
+                            let json = try JSONSerialization.jsonObject(with: data, options: [])
+                            print(json)
+                        } catch {
+                            print(error)
+                        }
+                    }.resume()
+                }
+            }
+        }
+    }
+    
+   
 }

@@ -17,9 +17,11 @@ struct ODataQuery {
     var id: Int32?
 }
 
-enum queryResultFormat: String {
+enum QueryResultFormat: String {
     case json = "json"
     case xml = "xml"
     case tfs = "3.2"
 }
+
+
 

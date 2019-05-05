@@ -13,6 +13,8 @@ class ReportViewController: UIViewController {
     let globalSettings = GlobalSettings()
     let rootViewController = AppDelegate.shared.rootViewController
     var currentBusinessValue: Int32 = 0
+    var oldBusinessValueSegmentControl = 0
+    var currentHeight = CGFloat()
     
     @IBOutlet weak var mainView: UIView!
     @IBOutlet weak var lastView: UIView!
@@ -32,7 +34,6 @@ class ReportViewController: UIViewController {
     @IBOutlet weak var mainLabel: UILabel!
     @IBOutlet weak var businessValueSegmentControl: UISegmentedControl!
     @IBAction func businessValueChangedSegmentControl(_ sender: UISegmentedControl) {
-        
         switch businessValueSegmentControl.selectedSegmentIndex {
         case 0:
             currentBusinessValue = 0
@@ -56,14 +57,18 @@ class ReportViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        print(view.frame)
         // Do any additional setup after loading the view.
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        currentHeight = view.frame.height
+        
         countEusState()
     }
 
+    
+    
     
     func countEusState() {
         var allEus = rootViewController.epicUserStories.count
@@ -79,18 +84,36 @@ class ReportViewController: UIViewController {
             thirdEus = rootViewController.epicUserStories.filter({$0.tfsState == "Новый" && $0.businessValue?.value == currentBusinessValue}).count
         }
         let allHeght = mainView.frame.height
-        
+        if allEus == 0 {
+            businessValueSegmentControl.selectedSegmentIndex = oldBusinessValueSegmentControl
+            showMessage(title: "Нет данных", message: "Нет ЭПИ с ценностью \(currentBusinessValue)")
+            return
+        } else {
+            oldBusinessValueSegmentControl = businessValueSegmentControl.selectedSegmentIndex
+        }
         firstLabel.text = "Выполнено \(firstEus) ЭПИ"
         secondLabel.text = "Выполняются \(secondEus) ЭПИ"
         thirdLabel.text = "В очереди \(thirdEus) ЭПИ"
         mainLabel.text = "Всего \(allEus) ЭПИ"
         lastLabel.text = "Подготавливаются в 1С \(allEus - firstEus - secondEus - thirdEus) ЭПИ"
-        firstHeightConstraint.constant = CGFloat(firstEus) * allHeght / CGFloat(allEus)
-        secondHeightConstraint.constant = CGFloat(secondEus) * allHeght / CGFloat(allEus)
-        thirdHeightConstraint.constant = CGFloat(thirdEus) * allHeght / CGFloat(allEus)
+        lastView.isHidden = allEus - firstEus - secondEus - thirdEus == 0
+        firstView.isHidden = firstEus == 0
+        secondView.isHidden = secondEus == 0
+        thirdView.isHidden = thirdEus == 0
+        firstHeightConstraint.constant = CGFloat(firstEus) * allHeght / CGFloat(allEus) < 20 ? 20 : CGFloat(firstEus) * allHeght / CGFloat(allEus)
+        secondHeightConstraint.constant = CGFloat(secondEus) * allHeght / CGFloat(allEus) < 20 ? 20 : CGFloat(secondEus) * allHeght / CGFloat(allEus)
+        thirdHeightConstraint.constant = CGFloat(thirdEus) * allHeght / CGFloat(allEus) < 20 ? 20 : CGFloat(thirdEus) * allHeght / CGFloat(allEus)
+        
         
     }
     
+    
+    func showMessage(title: String, message: String) {
+        let alertData = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: "Ok", style: .default, handler: nil)
+        alertData.addAction(cancelAction)
+        present(alertData, animated: true, completion: nil)
+    }
     /*
     // MARK: - Navigation
 
