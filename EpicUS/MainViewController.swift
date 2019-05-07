@@ -109,6 +109,7 @@ class MainViewController: UIViewController {
         strategicTargets = loadArrayFromCoreData(object: "StrategicTarget", context: context)
         treeWorkItems = loadArrayFromCoreData(object: "TreeWorkItem", context: context)
         states = loadArrayFromCoreData(object: "State", context: context)
+        states = states.sorted(by: {$0.name! < $1.name!})
         quotas = loadArrayFromCoreData(object: "Quota", context: context)
     }
     
