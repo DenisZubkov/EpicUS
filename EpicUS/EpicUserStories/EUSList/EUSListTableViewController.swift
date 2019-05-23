@@ -13,6 +13,10 @@ class EUSTableViewController: UITableViewController {
     
     let globalSettings = GlobalSettings()
     let rootViewController = AppDelegate.shared.rootViewController
+    var direction: Direction?
+    var quart = 1
+    var eusState: State?
+    var epicUserStories: [EpicUserStory] = []
     
     @IBAction func send1cButton(_ sender: Any) {
         
@@ -24,18 +28,20 @@ class EUSTableViewController: UITableViewController {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
+        epicUserStories = rootViewController.epicUserStories.filter({$0.direction == direction && rootViewController.getQuart(from: $0.tfsEndDate) ==  quart && $0.state == eusState})
+        epicUserStories = epicUserStories.sorted(by: {$0.tfsEndDate! < $1.tfsEndDate!})
     }
     
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return rootViewController.epicUserStories.count
+        return epicUserStories.count
     }
     
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "EUSListSell", for: indexPath) as! EUSListTableViewCell
-        let eus = rootViewController.epicUserStories[indexPath.row]
+        let eus = epicUserStories[indexPath.row]
         cell.eus = eus
         cell.nameLabel.text = eus.name
         cell.number1CLabel.text = eus.num
@@ -44,6 +50,7 @@ class EUSTableViewController: UITableViewController {
         cell.statusLabel.text = eus.state?.name
         cell.dateEndLabel.text = globalSettings.dateToString(date: eus.tfsEndDate)
         cell.dateBeginLabel.text = globalSettings.dateToString(date: eus.tfsBeginDate)
+        cell.directionLabel.text = eus.direction?.name
         
         let dateEnd: Date = eus.tfsEndDate ?? Date()
         let dateBegin: Date = eus.tfsBeginDate ?? (eus.tfsDateCreate ?? Date())
@@ -57,7 +64,7 @@ class EUSTableViewController: UITableViewController {
         
         cell.storePointsAnaliticFact.text = "\(eus.tfsStorePointAnaliticFact)"
         cell.storePointsDevFact.text = "\(eus.tfsStorePointDevFact)"
-        cell.storePointsFact.text = "\(eus.tfsStorePointAnaliticFact + eus.tfsStorePointDevFact)"
+        cell.storePointsFact.text = "\(eus.tfsStorePointFact)"
         
         
         // Configure the cell...

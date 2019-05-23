@@ -34,18 +34,19 @@ class MainViewController: UIViewController {
     var teams: [Team] = []
     var users: [User] = []
     var epicUserStories: [EpicUserStory] = []
+    var userStories: [UserStory] = []
+    var products: [Product] = []
+    var userStoryTypes: [UserStoryType] = []
     var treeWorkItems: [TreeWorkItem] = []
-    var savedModifyDate: Date = Date() - 1000000000
-    var loadType: LoadType = .first
     var states: [State] = []
     var quotas: [Quota] = []
     
-    
-    
+    var savedModifyDate: Date = Date() - 1000000000
+    var loadType: LoadType = .first
     var date = Date()
     
-    
-    var queries: [ODataQuery] = []
+
+    var queriesFor1C: [ODataQuery] = []
     var queriesTFS: [ODataQuery] = []
     
     @IBOutlet weak var loadProgressView: UIProgressView!
@@ -61,29 +62,30 @@ class MainViewController: UIViewController {
                 loadType = .none
             }
         } else {
-            loadType = .none
+            loadType = .first
             //UserDefaults.standard.set(date, forKey: "ModifyDate")
         }
         
         
         //loadProgressView.transform = loadProgressView.transform.scaledBy(x: 1, y: 20)
         context = coreDataStack.persistentContainer.viewContext
-        queries = globalSettings.prepareQueryArray()
+        queriesFor1C = globalSettings.prepareQueryArray()
         
      }
     
     override func viewDidAppear(_ animated: Bool) {
-        var index = 0
         loadProgressView.progress = 0
         switch loadType {
         case .none:
             loadAllDataFromCoreData()
             performSegue(withIdentifier: "TabBarSegue", sender: nil)
         case .first:
+            var index = 0
+            //loadStageLabel.text = "Загрузка дерева EUS..."
             //getTreeWorkItems(context: context)
             loadStageLabel.text = "Загрузка данных из 1С..."
-            getDataJSONFromTFS(queriesTFS: queries, i: &index, type: .json)
-            loadAllDataFromCoreData()
+            getDataJSONFromTFS(queriesTFS: queriesFor1C, i: &index, type: .json)
+//            loadAllDataFromCoreData()
         case .background:
             loadAllDataFromCoreData()
         }
@@ -106,8 +108,11 @@ class MainViewController: UIViewController {
         businessValues = loadArrayFromCoreData(object: "BusinessValue", context: context)
         propertyValues = loadArrayFromCoreData(object: "PropertyValue", context: context)
         epicUserStories = loadArrayFromCoreData(object: "EpicUserStory", context: context)
+        userStories = loadArrayFromCoreData(object: "UserStory", context: context)
+        products = loadArrayFromCoreData(object: "Product", context: context)
         strategicTargets = loadArrayFromCoreData(object: "StrategicTarget", context: context)
         treeWorkItems = loadArrayFromCoreData(object: "TreeWorkItem", context: context)
+        userStoryTypes = loadArrayFromCoreData(object: "UserStoryType", context: context)
         states = loadArrayFromCoreData(object: "State", context: context)
         states = states.sorted(by: {$0.name! < $1.name!})
         quotas = loadArrayFromCoreData(object: "Quota", context: context)
@@ -136,6 +141,16 @@ class MainViewController: UIViewController {
             let date = RFC3339DateFormatter.date(from: str)
             return date
         }
+    }
+    
+    func getQuart(from date: Date?) -> Int {
+        var quart = 0
+        guard let date = date else { return quart }
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.month], from: date)
+        guard let month = components.month else { return (quart) }
+        quart = (month - 1) / 3 + 1
+        return (quart)
     }
     
     func saveDataToFile(fileName: String, fileExt: String, data: Data) -> Bool{
@@ -255,7 +270,7 @@ class MainViewController: UIViewController {
                 let data = nsData as Data
                 let result: WorkItemJSON? = self.getType(from: data)
                 if let workItem = result {
-                    addWorkItemToCoreData(workItem: workItem)
+                    addEUSFromTFSToCoreData(workItem: workItem)
                 }
                 
             }
@@ -269,7 +284,7 @@ class MainViewController: UIViewController {
     func parceJSONFrom1C(index: Int) {
         
         // Шаг для ProgressView
-        let step = Float(1) / (Float(queries.count) * Float(1.5))
+        let step = Float(1) / (Float(queriesFor1C.count) * Float(1.5))
         
         // Parce Parameters
         if let nsData = UserDefaults.standard.value(forKey: "0") as? NSData {
@@ -392,7 +407,6 @@ class MainViewController: UIViewController {
                     addDirectionToCoreData(direction: direction, context: context)
                 }
                 self.directions = self.loadArrayFromCoreData(object: "Direction", context: self.context)
-                
                 print("Directions: \(self.directions.count)")
             }
         }
@@ -483,10 +497,10 @@ class MainViewController: UIViewController {
     }
     
     func addTreeWorkItemsRoot(context: NSManagedObjectContext) {
-        for direction in globalSettings.tfsDirectionDict {
+        for direction in directions {
             guard let entity =  NSEntityDescription.entity(forEntityName: "TreeWorkItem", in: context) else { return }
             let workItem = NSManagedObject(entity: entity, insertInto: context)
-            workItem.setValue(direction.value, forKey: "id")
+            workItem.setValue(direction.tfsId, forKey: "id")
             workItem.setValue(0, forKey: "level")
             workItem.setValue(0, forKey: "parentId")
         }
@@ -529,7 +543,6 @@ class MainViewController: UIViewController {
         urlComponents.user = "zubkoff"
         urlComponents.password = "!den20zu10"
         guard let url = urlComponents.url else { return }
-        //        print(url)
         var index = i
         var currentLevel = level
         self.dataProvider.downloadDataFromTFS(url: url) { data in
@@ -539,7 +552,6 @@ class MainViewController: UIViewController {
                 }
                 index += 1
                 if index < queriesTFS.count {
-                    
                     self.getTreeWorkItemsJSONFromTFS(level: level, queriesTFS: queriesTFS, i: &index, type: type)
                 } else {
                     self.printDate(dateBegin: self.date, dateEnd: Date())
@@ -552,11 +564,35 @@ class MainViewController: UIViewController {
                     }
                     print(self.treeWorkItems.count)
                     currentLevel += 1
-                    if currentLevel < 3 {
+                    if currentLevel < 4 {
                         self.addTreeWorkItems(level: &currentLevel, context: self.context)
+                    } else {
+                        DispatchQueue.main.async {
+                            let progress: Float =  0
+                            self.loadProgressView.progress = progress
+                            self.loadStageLabel.text = "Обработка Продуктов из TFS..."
+                        }
+                        self.addProductsToCoreData(context: self.context)
+                        DispatchQueue.main.async {
+                            let progress: Float =  0
+                            self.loadProgressView.progress = progress
+                            self.loadStageLabel.text = "Обработка ЭПИ из TFS..."
+                        }
+                        self.addEUSsFromTFSToCoreData(context: self.context)
+                        
                     }
                 }
                 DispatchQueue.main.async {
+                    switch currentLevel {
+                    case 1:
+                        self.loadStageLabel.text = "Загрузка Продуктов из TFS..."
+                    case 2:
+                        self.loadStageLabel.text = "Загрузка ЭПИ из TFS..."
+                    case 3:
+                        self.loadStageLabel.text = "Загрузка ПИ из TFS..."
+                    default:
+                         self.loadStageLabel.text = "Загрузка из TFS..."
+                    }
                     let progress: Float =  Float(index) / Float(queriesTFS.count)
                     self.loadProgressView.progress = progress
                 }
@@ -564,6 +600,33 @@ class MainViewController: UIViewController {
             }
         }
     }
+    
+    func addEUSsFromTFSToCoreData(context: NSManagedObjectContext) {
+        
+        
+        let step: Float = Float(1.0) / Float(epicUserStories.count)
+        var i = 0
+        for eus in epicUserStories {
+            let tfsId = eus.tfsId
+            if let nsData = UserDefaults.standard.value(forKey: "\(tfsId)") as? NSData {
+                let data = nsData as Data
+                let result: WorkItemJSON? = self.getType(from: data)
+                if let workItem = result {
+                    addEUSFromTFSToCoreData(workItem: workItem)
+                }
+                
+            }
+            i += 1
+            DispatchQueue.main.async {
+                self.loadStageLabel.text = "Обработка ЭПИ из TFS: \(i) из \(self.epicUserStories.count)"
+                let progress = self.loadProgressView.progress + step
+                self.loadProgressView.progress = progress
+            }
+        }
+        loadAllDataFromCoreData()
+        performSegue(withIdentifier: "TabBarSegue", sender: nil)
+    }
+    
     
     func parseTreeWorkItemsJSONFromTFS (level: Int32, queries: [ODataQuery]) {
         for query in queries {
@@ -866,6 +929,9 @@ class MainViewController: UIViewController {
                 if let user = self.users.filter({$0.id == direction.userId}).first {
                     result.headDirection = user
                 }
+                if let id = result.id, let tfsId = globalSettings.tfsDirectionDict[id] {
+                    result.tfsId = tfsId
+                }
             } else {
                 guard let entity =  NSEntityDescription.entity(forEntityName: "Direction", in: context) else { return }
                 let property = NSManagedObject(entity: entity, insertInto: context)
@@ -878,6 +944,9 @@ class MainViewController: UIViewController {
                 property.setValue(direction.shortName, forKey: "small")
                 if let user = self.users.filter({$0.id == direction.userId}).first {
                     property.setValue(user, forKey: "headDirection")
+                }
+                if let tfsId = globalSettings.tfsDirectionDict[direction.id] {
+                    property.setValue(tfsId, forKey: "tfsId")
                 }
             }
         } catch let error as NSError {
@@ -892,7 +961,147 @@ class MainViewController: UIViewController {
         }
     }
     
-
+    // MARK: USERSTORYTYPES
+    
+    func addUserStoriesTypeToCoreData(context: NSManagedObjectContext) {
+        deleteUserStoriesTypeFromCoreData(context: context)
+        addUserStoryTypeToCoreData(id: "[ANLZ", name: "Анализ", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[DCMP", name: "Декомпозиция", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[WORK", name: "Выполнение", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[TEST", name: "Тестирование", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[ТЕСТ", name: "Тестирование", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[STOP", name: "Остановлено ВП", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[WAIT", name: "Ожидание", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[DOC",  name: "Документация", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[VND",  name: "Внедрение", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[VP",   name: "Ожидание ВП", type: "analitic", context: context)
+        addUserStoryTypeToCoreData(id: "[K",    name: "Разработка", type: "developer", context: context)
+        userStoryTypes = loadArrayFromCoreData(object: "UserStoryType", context: context)
+    }
+    
+    func deleteUserStoriesTypeFromCoreData(context: NSManagedObjectContext) {
+        userStoryTypes.removeAll()
+        let fetchRequest: NSFetchRequest<UserStoryType> = UserStoryType.fetchRequest()
+        do {
+            let results = try context.fetch(fetchRequest)
+            for result in results {
+                context.delete(result)
+            }
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+    }
+    
+    func addUserStoryTypeToCoreData(id: String, name: String, type: String, context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<UserStoryType> = UserStoryType.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let result = results.first {
+                result.name = name
+                result.type = type
+          } else {
+                guard let entity =  NSEntityDescription.entity(forEntityName: "UserStoryType", in: context) else { return }
+                let property = NSManagedObject(entity: entity, insertInto: context)
+                property.setValue(id, forKey: "id")
+                property.setValue(name, forKey: "name")
+                property.setValue(type, forKey: "type")
+            }
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+    }
+    
+    //MARK: PRODUCTS
+    
+    func addProductsToCoreData(context: NSManagedObjectContext) {
+        let products = treeWorkItems.filter({$0.level == Int32(1)})
+        for product in products {
+            if let nsData = UserDefaults.standard.value(forKey: "\(product.id)") as? NSData {
+                let data = nsData as Data
+                let result: WorkItemJSON? = self.getType(from: data)
+                if let workItem = result,
+                    let state = workItem.fields.state,
+                    let productOwner = workItem.fields.productOwner {
+                        addProductToCoreData(name: workItem.fields.title!,
+                                             tfsId: product.id,
+                                             directionId: product.parentId,
+                                             state: state,
+                                             productOwner: productOwner,
+                                             context: context)
+                    
+                }
+                
+            }
+        }
+        self.products = loadArrayFromCoreData(object: "Product", context: context)
+    }
+    
+    
+    func addProductToCoreData(name: String, tfsId: Int32, directionId: Int32, state: String, productOwner: String, context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<Product> = Product.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", "\(tfsId)")
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let result = results.first {
+                if state != "Новый" {
+                    context.delete(result)
+                } else {
+                    result.name = name
+                    result.tfsId = tfsId
+                    if let direction = directions.filter({$0.tfsId == directionId}).first {
+                        result.direction = direction
+                        direction.products?.adding(result)
+                    }
+                    if let user = users.filter({productOwner.contains($0.fio!)}).first {
+                        result.user = user
+                        user.products?.adding(result)
+                    }
+                }
+                
+            } else {
+                guard let entity =  NSEntityDescription.entity(forEntityName: "Product", in: context) else { return }
+                let property = NSManagedObject(entity: entity, insertInto: context)
+                property.setValue("\(tfsId)", forKey: "id")
+                property.setValue(name, forKey: "name")
+                property.setValue(tfsId, forKey: "tfsId")
+                if let direction = directions.filter({$0.tfsId == directionId}).first {
+                    property.setValue(direction, forKey: "direction")
+                    direction.products?.adding(property as! Product)
+                }
+                if let user = users.filter({productOwner.contains($0.fio!)}).first {
+                    property.setValue(user, forKey: "user")
+                    user.products?.adding(property as! Product)
+                }
+            }
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+    }
+    
+    
+    
     //MARK: QUOTAS
     
 
@@ -1105,7 +1314,7 @@ class MainViewController: UIViewController {
     
   
     
-    // MARK: State
+    // MARK: STATES
     
     func addStateToCoreData(name: String) {
         let fetchRequest: NSFetchRequest<State> = State.fetchRequest()
@@ -1503,33 +1712,44 @@ class MainViewController: UIViewController {
         }
     }
     
+//    func addEUSFromTFS() {
+//        for eus in epicUserStories {
+//            let tfsId = eus.tfsId
+//            if tfsId != 0 {
+//                let query = ODataQuery.init(server: globalSettings.serverTFS,
+//                                            table: "workitems/\(tfsId)",
+//                    filter: nil,
+//                    select: nil,
+//                    orderBy: nil,
+//                    id: tfsId)
+//
+//
+//                queriesTFS.append(query)
+//            }
+//        }
+//        var index = 0
+//        DispatchQueue.main.async {
+//            self.loadStageLabel.text = "Загрузка данных из TFS..."
+//        }
+//        getDataJSONFromTFS(queriesTFS: queriesTFS, i: &index, type: .tfs)
+//
+//    }
+    
+    
     func addEUSFromTFS() {
-        for eus in epicUserStories {
-            let tfsId = eus.tfsId
-            if tfsId != 0 {
-                let query = ODataQuery.init(server: globalSettings.serverTFS,
-                                            table: "workitems/\(tfsId)",
-                    filter: nil,
-                    select: nil,
-                    orderBy: nil,
-                    id: tfsId)
-                
-                
-                queriesTFS.append(query)
-            }
-        }
-        var index = 0
         DispatchQueue.main.async {
             self.loadStageLabel.text = "Загрузка данных из TFS..."
         }
-        getDataJSONFromTFS(queriesTFS: queriesTFS, i: &index, type: .tfs)
+        // Загружаем типы ПИ в CoreData
+        addUserStoriesTypeToCoreData(context: context)
         
+        // Загружаем дерево ЭПИ
+        getTreeWorkItems(context: context)
     }
     
     
     
-    
-    func addWorkItemToCoreData(workItem: WorkItemJSON) {
+    func addEUSFromTFSToCoreData(workItem: WorkItemJSON) {
         let fetchRequest: NSFetchRequest<EpicUserStory> = EpicUserStory.fetchRequest()
         let tfsId = workItem.id
         fetchRequest.predicate = NSPredicate(format: "tfsId == %i", tfsId)
@@ -1584,16 +1804,29 @@ class MainViewController: UIViewController {
                 if let value = workItem.fields.storePointsDevPlan {
                     result.tfsStorePointDevPlan = Double(value)
                 }
-                for strUrl in workItem.relations {
-                    if strUrl.rel == "System.LinkTypes.Hierarchy-Reverse" {
-                        addProductToCoreData(context: context)
-                    }
-                    if strUrl.rel == "System.LinkTypes.Hierarchy-Forward" {
-                        addUserStoryUrlToCoreData(context: context)
-                    }
+                
+                let dp = getDirectionFromTFS(tfsId: tfsId)
+                if let direction = dp.0 {
+                    result.direction = direction
+                    result.direction?.addToEpicUserStories(result)
+                }
+                if let product = dp.1 {
+                    result.product = product
+                    result.product?.addToEpicUserStiories(result)
                 }
                 
-                
+                let userStoryIds = self.treeWorkItems.filter({$0.parentId == tfsId})
+                for userStoryId in userStoryIds {
+                    if let nsData = UserDefaults.standard.value(forKey: "\(userStoryId.id)") as? NSData {
+                        let data = nsData as Data
+                        let workItems: WorkItemJSON? = self.getType(from: data)
+                        if let workItem = workItems {
+                            self.addUserStoryToCoreData(eus: result, workItem: workItem, context: context)
+                        }
+                        
+                    }
+                    
+                }
                 
             }
         } catch let error as NSError {
@@ -1607,13 +1840,148 @@ class MainViewController: UIViewController {
             return
         }
     }
+
     
-    func addProductToCoreData(context: NSManagedObjectContext) {
-       
+    func getDirectionFromTFS(tfsId: Int) -> (Direction?, Product?) {
+        guard let firstLevelId = self.treeWorkItems.filter({$0.id == tfsId && $0.level == Int32(2)}).first?.parentId else { return (nil,nil) }
+        guard let zeroLevelId  = self.treeWorkItems.filter({$0.id == firstLevelId && $0.level == Int32(1)}).first?.parentId else { return (nil,nil) }
+        guard let directionId = globalSettings.tfsDirectionDict.filter({$0.value == zeroLevelId}).first?.key else { return (nil,nil) }
+        return (self.directions.filter({$0.id == directionId}).first, self.products.filter({$0.tfsId == firstLevelId}).first)
     }
+
     
-    func addUserStoryUrlToCoreData(context: NSManagedObjectContext) {
-        
+    func addUserStoryToCoreData(eus: EpicUserStory, workItem: WorkItemJSON, context: NSManagedObjectContext) {
+        let fetchRequest: NSFetchRequest<UserStory> = UserStory.fetchRequest()
+        let tfsId = workItem.id
+        dump(workItem)
+        fetchRequest.predicate = NSPredicate(format: "tfsId == %i", tfsId)
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let result = results.first {
+                if workItem.fields.state == "Удален" {
+                    context.delete(result)
+                } else {
+                    for usType in self.userStoryTypes {
+                        if let title = result.title, let id = usType.id, title.contains(id) {
+                            result.userStoryType = usType
+                            usType.addToUserStories(result)
+                        }
+                    }
+                    result.tfsTeam = workItem.fields.teamName
+                    result.tfsState = workItem.fields.state
+                    if let state = states.filter({$0.name == workItem.fields.state}).first {
+                        result.state = state
+                        state.userStories?.adding(result)
+                    } else {
+                        if let state = workItem.fields.state {
+                            addStateToCoreData(name: state)
+                            self.states = self.loadArrayFromCoreData(object: "State", context: self.context)
+                            if let state = states.filter({$0.name == workItem.fields.state}).first {
+                                result.state = state
+                                state.userStories?.adding(result)
+                            }
+                        }
+                    }
+                    
+                    if let productOwner = workItem.fields.productOwner,
+                        let user = users.filter({productOwner.contains($0.fio!)}).first {
+                        result.productOwner = user
+                        user.productOwnersUS?.adding(result)
+                    }
+                    
+                    result.dateCreate = convertStringTFSToDate(from: workItem.fields.createdDate)
+                    result.title = workItem.fields.title
+                    result.tfsLastChangeDate = convertStringTFSToDate(from: workItem.fields.lastChangeDate)
+                    result.dateEnd = convertStringTFSToDate(from: workItem.fields.endDate)
+                    result.dateBegin = convertStringTFSToDate(from: workItem.fields.beginDate)
+                    if let businessValue = workItem.fields.businessValue {
+                        result.businessValue = Int32(businessValue)
+                    }
+                    if let priority = workItem.fields.priority {
+                        result.priority = Int32(priority)
+                    }
+                    if let analitic = workItem.fields.analiticName,
+                        let user = users.filter({analitic.contains($0.fio!)}).first {
+                        result.analitic = user
+                        user.analiticsUS?.adding(result)
+                    }
+                    
+                    if let value = workItem.fields.storePointsFact {
+                        result.storePointFact = Double(value)
+                    }
+                    if let value = workItem.fields.storePointsPlan {
+                        result.storePointPlan = Double(value)
+                    }
+                    result.epicUserStory = eus
+                    eus.userStories?.adding(result)
+                }
+            } else {
+                guard let entity =  NSEntityDescription.entity(forEntityName: "UserStory", in: context) else { return }
+                let property = NSManagedObject(entity: entity, insertInto: context)
+                property.setValue(workItem.id, forKey: "id")
+                for usType in self.userStoryTypes {
+                    if let title = workItem.fields.title, let id = usType.id, title.contains(id) {
+                        property.setValue(usType, forKey: "userStoryType")
+                        usType.addToUserStories(property as! UserStory)
+                    }
+                }
+                property.setValue(workItem.fields.teamName, forKey: "tfsTeam")
+                property.setValue(workItem.fields.state, forKey: "tfsState")
+                if let state = states.filter({$0.name == workItem.fields.state}).first {
+                    property.setValue(state, forKey: "state")
+                    state.addToUserStories(property as! UserStory)
+                } else {
+                    if let state = workItem.fields.state {
+                        addStateToCoreData(name: state)
+                        self.states = self.loadArrayFromCoreData(object: "State", context: self.context)
+                        if let state = states.filter({$0.name == workItem.fields.state}).first {
+                            property.setValue(state, forKey: "state")
+                            state.addToUserStories(property as! UserStory)
+                        }
+                    }
+                }
+                
+                if let productOwner = workItem.fields.productOwner,
+                    let user = users.filter({productOwner.contains($0.fio!)}).first {
+                    property.setValue(user, forKey: "productOwner")
+                    user.productOwnersUS?.adding(property as! UserStory)
+                }
+                property.setValue(convertStringTFSToDate(from: workItem.fields.createdDate), forKey: "dateCreate")
+                property.setValue(workItem.fields.title, forKey: "title")
+                property.setValue(convertStringTFSToDate(from: workItem.fields.lastChangeDate), forKey: "tfsLastChangeDate")
+                property.setValue(convertStringTFSToDate(from: workItem.fields.beginDate), forKey: "dateBegin")
+                property.setValue(convertStringTFSToDate(from: workItem.fields.endDate), forKey: "dateEnd")
+                if let businessValue = workItem.fields.businessValue {
+                    property.setValue(Int32(businessValue), forKey: "businessValue")
+                }
+                if let priority = workItem.fields.priority {
+                    property.setValue(Int32(priority), forKey: "priority")
+                }
+                if let analitic = workItem.fields.analiticName,
+                    let user = users.filter({analitic.contains($0.fio!)}).first {
+                    property.setValue(user, forKey: "analitic")
+                    user.analiticsUS?.adding(property as! UserStory)
+                }
+                
+                if let value = workItem.fields.storePointsFact {
+                    property.setValue(Double(value), forKey: "storePointFact")
+                }
+                if let value = workItem.fields.storePointsPlan {
+                    property.setValue(Double(value), forKey: "storePointPlan")
+                }
+                property.setValue(eus, forKey: "epicUserStory")
+                eus.userStories?.adding(property as! UserStory)
+            }
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+            return
+        }
     }
     
     func createPatchQuery(eus: EpicUserStory) {
