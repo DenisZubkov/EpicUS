@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "MainViewController.addProductToCoreData(name:tfsId:directionId:state:productOwner:context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "user.fio">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addWorkItemToCoreData(workItem:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.directions.filter({$0.id == &quot;79cb6769-08c6-11e9-94b6-0050568d26bf&quot;}).first">
+            </PersistentString>
+            <PersistentString
+               value = "convertStringTFSToDate(from: &quot;2017-12-31T21:00:00Z&quot;)">
+            </PersistentString>
+            <PersistentString
+               value = "self.direction[10].id">
+            </PersistentString>
+            <PersistentString
+               value = "getDirectionFromTFS(tfsId: tfsId)">
+            </PersistentString>
+            <PersistentString
+               value = "globalSettings.tfsDirectionDict.filter({$0.value == 4637}).first?.key">
+            </PersistentString>
+            <PersistentString
+               value = "self.treeWorkItems.filter({$0.id == 34 &amp;&amp; $0.level == Int32(1)}).first?.parentId">
+            </PersistentString>
+            <PersistentString
+               value = "self.treeWorkItems.filter({$0.id == 1198 &amp;&amp; $0.level == Int32(2)}).first?.parentId">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addBusinessValuesToCoreData():MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addEUSFromTFS():MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "directions[0].tfsId">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addEpicUserStoryToCoreData(epicUserStory:context:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addQuotasToCoreData(context:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.viewDidAppear(_:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addEUSsFromTFSToCoreData(context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "eus.name">
+            </PersistentString>
+            <PersistentString
+               value = "eus.desc">
+            </PersistentString>
+            <PersistentString
+               value = "eus.id">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in MainViewController.getTreeWorkItemsJSONFromTFS(level:queriesTFS:i:type:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addProductsToCoreData(context:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.getType&lt;A&gt;(from:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addUserStoryToCoreData(workItem:context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.teams[5].name">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addUserStoryToCoreData(eus:workItem:context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "usType.name">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.getTreeWorkItems(context:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.parceJSONFrom1C(index:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "String(data, using: .utf8)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addDirectionToCoreData(direction:context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.directions.count">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addTreeWorkItemsRoot(context:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addUserDataToCoreData(usersJSON:context:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.addTreeWorkItemToCoreData(level:workItem:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.parseTreeWorkItemsJSONFromTFS(level:queries:):MainViewController.swift">
+      </ContextState>
+      <ContextState
+         contextName = "MainViewController.getDirectionFromTFS(tfsId:):MainViewController.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.treeWorkItems.filter({$0.id == tfsId}).first?.level">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

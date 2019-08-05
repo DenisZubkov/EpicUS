@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="14490.99" systemVersion="18G29g" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="BusinessValue" representedClassName="BusinessValue" syncable="YES" codeGenerationType="class">
+        <attribute name="days" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="value" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="businessValue" inverseEntity="EpicUserStory" syncable="YES"/>
+    </entity>
+    <entity name="Category" representedClassName="Category" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="short" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="category" inverseEntity="EpicUserStory" syncable="YES"/>
+    </entity>
+    <entity name="Dept" representedClassName="Dept" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="headId" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="oracleId" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="parentId" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="childPepts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Dept" inverseName="parentDept" inverseEntity="Dept" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="dept" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="head" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="head" inverseEntity="User" syncable="YES"/>
+        <relationship name="parentDept" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dept" inverseName="childPepts" inverseEntity="Dept" syncable="YES"/>
+        <relationship name="users" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="dept" inverseEntity="User" syncable="YES"/>
+    </entity>
+    <entity name="Direction" representedClassName="Direction" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="ord" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="small" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsId" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="direction" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="headDirection" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="direction" inverseEntity="User" syncable="YES"/>
+        <relationship name="productOwners" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="directionPO" inverseEntity="User" syncable="YES"/>
+        <relationship name="products" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Product" inverseName="direction" inverseEntity="Product" syncable="YES"/>
+        <relationship name="quotas" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Quota" inverseName="direction" inverseEntity="Quota" syncable="YES"/>
+    </entity>
+    <entity name="EpicUserStory" representedClassName="EpicUserStory" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="dateBegin" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="dateCreate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="dateEnd" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="deathLine" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="noShow" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="num" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="priority" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="quart" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="storePointsAnaliticFact" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="storePointsAnaliticPlane" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="storePointsDevFact" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="storePointsDevPlane" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsAnalitic" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsBeginDate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="tfsBusinessArea" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsBusinessValue" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsCategory" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsDateCreate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="tfsEndDate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="tfsId" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsLastChangeDate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="tfsParentWorkItemUrl" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsPriority" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsProductOwner" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsQuart" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsState" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsStorePointAnaliticFact" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsStorePointAnaliticPlan" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsStorePointDevFact" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsStorePointDevPlan" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsStorePointFact" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsStorePointPlan" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsTitle" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsUrl" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsWorkItemType" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="analitic" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="analiticsEUS" inverseEntity="User" syncable="YES"/>
+        <relationship name="businessValue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="BusinessValue" inverseName="epicUserStories" inverseEntity="BusinessValue" syncable="YES"/>
+        <relationship name="category" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Category" inverseName="epicUserStories" inverseEntity="Category" syncable="YES"/>
+        <relationship name="dept" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dept" inverseName="epicUserStories" inverseEntity="Dept" syncable="YES"/>
+        <relationship name="direction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Direction" inverseName="epicUserStories" inverseEntity="Direction" syncable="YES"/>
+        <relationship name="product" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Product" inverseName="epicUserStiories" inverseEntity="Product" syncable="YES"/>
+        <relationship name="productOwner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="productOwnersEUS" inverseEntity="User" syncable="YES"/>
+        <relationship name="propertiesEUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PropertyEUS" inverseName="epicUserStory" inverseEntity="PropertyEUS" syncable="YES"/>
+        <relationship name="state" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="State" inverseName="epicUserStories" inverseEntity="State" syncable="YES"/>
+        <relationship name="stops" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="StopEUS" inverseName="epicUserStory" inverseEntity="StopEUS" syncable="YES"/>
+        <relationship name="tactic" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Tactic" inverseName="epicUserStories" inverseEntity="Tactic" syncable="YES"/>
+        <relationship name="userStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserStory" inverseName="epicUserStory" inverseEntity="UserStory" syncable="YES"/>
+    </entity>
+    <entity name="Product" representedClassName="Product" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsId" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="direction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Direction" inverseName="products" inverseEntity="Direction" syncable="YES"/>
+        <relationship name="epicUserStiories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="product" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="products" inverseEntity="User" syncable="YES"/>
+    </entity>
+    <entity name="Property" representedClassName="Property" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="propertiesEUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PropertyEUS" inverseName="property" inverseEntity="PropertyEUS" syncable="YES"/>
+        <relationship name="propertyValues" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PropertyValue" inverseName="property" inverseEntity="PropertyValue" syncable="YES"/>
+    </entity>
+    <entity name="PropertyEUS" representedClassName="PropertyEUS" syncable="YES" codeGenerationType="class">
+        <attribute name="value" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="epicUserStory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="propertiesEUS" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="property" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Property" inverseName="propertiesEUS" inverseEntity="Property" syncable="YES"/>
+        <relationship name="propertyValue" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PropertyValue" inverseName="propertiesEUS" inverseEntity="PropertyValue" syncable="YES"/>
+    </entity>
+    <entity name="PropertyValue" representedClassName="PropertyValue" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="isFolder" optional="YES" attributeType="Boolean" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="parentId" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="value" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="propertiesEUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PropertyEUS" inverseName="propertyValue" inverseEntity="PropertyEUS" syncable="YES"/>
+        <relationship name="property" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Property" inverseName="propertyValues" inverseEntity="Property" syncable="YES"/>
+    </entity>
+    <entity name="Quota" representedClassName="Quota" syncable="YES" codeGenerationType="class">
+        <attribute name="quart" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="storePointAnaliticFact" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointAnaliticPlan" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointAnaliticWork" optional="YES" attributeType="Double" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointDevFact" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointDevPlan" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointDevWork" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="direction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Direction" inverseName="quotas" inverseEntity="Direction" syncable="YES"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="quotes" inverseEntity="User" syncable="YES"/>
+    </entity>
+    <entity name="State" representedClassName="State" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="state" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="userStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserStory" inverseName="state" inverseEntity="UserStory" syncable="YES"/>
+    </entity>
+    <entity name="StopEUS" representedClassName="StopEUS" syncable="YES" codeGenerationType="class">
+        <attribute name="dateBegin" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="dateEnd" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="num" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <relationship name="epicUserStory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="stops" inverseEntity="EpicUserStory" syncable="YES"/>
+    </entity>
+    <entity name="StrategicTarget" representedClassName="StrategicTarget" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="tactics" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Tactic" inverseName="strategicTarget" inverseEntity="Tactic" syncable="YES"/>
+    </entity>
+    <entity name="Tactic" representedClassName="Tactic" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="parentId" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="epicUserStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="tactic" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="strategicTarget" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="StrategicTarget" inverseName="tactics" inverseEntity="StrategicTarget" syncable="YES"/>
+    </entity>
+    <entity name="Team" representedClassName="Team" syncable="YES" codeGenerationType="class">
+        <attribute name="dataVersion" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="typeTeam" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TypeTeam" inverseName="teams" inverseEntity="TypeTeam" syncable="YES"/>
+        <relationship name="users" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="team" inverseEntity="User" syncable="YES"/>
+        <relationship name="userStories" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserStory" inverseName="team" inverseEntity="UserStory" syncable="YES"/>
+    </entity>
+    <entity name="TreeWorkItem" representedClassName="TreeWorkItem" syncable="YES" codeGenerationType="class">
+        <attribute name="data" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="level" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="parentId" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+    </entity>
+    <entity name="TypeTeam" representedClassName="TypeTeam" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="teams" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="typeTeam" inverseEntity="Team" syncable="YES"/>
+    </entity>
+    <entity name="User" representedClassName="User" syncable="YES" codeGenerationType="class">
+        <attribute name="email" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="fio" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="oracleId" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="phone" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="photo" optional="YES" attributeType="Binary" syncable="YES"/>
+        <relationship name="analiticsEUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="analitic" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="analiticsUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserStory" inverseName="analitic" inverseEntity="UserStory" syncable="YES"/>
+        <relationship name="dept" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dept" inverseName="users" inverseEntity="Dept" syncable="YES"/>
+        <relationship name="direction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Direction" inverseName="headDirection" inverseEntity="Direction" syncable="YES"/>
+        <relationship name="directionPO" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Direction" inverseName="productOwners" inverseEntity="Direction" syncable="YES"/>
+        <relationship name="head" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dept" inverseName="head" inverseEntity="Dept" syncable="YES"/>
+        <relationship name="productOwnersEUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="productOwner" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="productOwnersUS" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserStory" inverseName="productOwner" inverseEntity="UserStory" syncable="YES"/>
+        <relationship name="products" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Product" inverseName="user" inverseEntity="Product" syncable="YES"/>
+        <relationship name="quotes" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Quota" inverseName="user" inverseEntity="Quota" syncable="YES"/>
+        <relationship name="team" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="users" inverseEntity="Team" syncable="YES"/>
+    </entity>
+    <entity name="UserStory" representedClassName="UserStory" syncable="YES" codeGenerationType="class">
+        <attribute name="businessValue" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="dateBegin" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="dateCreate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="dateEnd" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="priority" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointFact" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="storePointPlan" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES" syncable="YES"/>
+        <attribute name="tfsLastChangeDate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="tfsSprintName" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsState" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="tfsTeam" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="analitic" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="analiticsUS" inverseEntity="User" syncable="YES"/>
+        <relationship name="epicUserStory" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="EpicUserStory" inverseName="userStories" inverseEntity="EpicUserStory" syncable="YES"/>
+        <relationship name="productOwner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="productOwnersUS" inverseEntity="User" syncable="YES"/>
+        <relationship name="state" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="State" inverseName="userStories" inverseEntity="State" syncable="YES"/>
+        <relationship name="team" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="userStories" inverseEntity="Team" syncable="YES"/>
+        <relationship name="userStoryType" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="UserStoryType" inverseName="userStories" inverseEntity="UserStoryType" syncable="YES"/>
+    </entity>
+    <entity name="UserStoryType" representedClassName="UserStoryType" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="type" optional="YES" attributeType="String" syncable="YES"/>
+        <relationship name="userStories" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="UserStory" inverseName="userStoryType" inverseEntity="UserStory" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="BusinessValue" positionX="-405" positionY="-657" width="128" height="120"/>
+        <element name="Category" positionX="-528.6953125" positionY="-416.703125" width="128" height="105"/>
+        <element name="Dept" positionX="-138.828125" positionY="-833.69921875" width="128" height="208"/>
+        <element name="Direction" positionX="-80.0546875" positionY="-487.765625" width="128" height="208"/>
+        <element name="EpicUserStory" positionX="-290.7265625" positionY="-484.57421875" width="128" height="795"/>
+        <element name="Product" positionX="266.91796875" positionY="-557.23046875" width="128" height="135"/>
+        <element name="Property" positionX="23.3671875" positionY="119.3828125" width="128" height="118"/>
+        <element name="PropertyEUS" positionX="-120.5078125" positionY="292.33203125" width="128" height="103"/>
+        <element name="PropertyValue" positionX="106.62109375" positionY="286.05078125" width="128" height="148"/>
+        <element name="Quota" positionX="-366.91796875" positionY="-1003.65234375" width="128" height="180"/>
+        <element name="State" positionX="-540.89453125" positionY="-307.30859375" width="128" height="105"/>
+        <element name="StopEUS" positionX="-544.03515625" positionY="-198.34765625" width="128" height="103"/>
+        <element name="StrategicTarget" positionX="-601.80859375" positionY="263.20703125" width="128" height="88"/>
+        <element name="Tactic" positionX="-493.98046875" positionY="70.3515625" width="128" height="118"/>
+        <element name="Team" positionX="470.7890625" positionY="91.05859375" width="128" height="133"/>
+        <element name="TreeWorkItem" positionX="-734.4921875" positionY="-780.734375" width="128" height="105"/>
+        <element name="TypeTeam" positionX="394.09765625" positionY="266.234375" width="128" height="88"/>
+        <element name="User" positionX="358.43359375" positionY="-198.06640625" width="128" height="300"/>
+        <element name="UserStory" positionX="-42.33203125" positionY="-61.96875" width="128" height="330"/>
+        <element name="UserStoryType" positionX="-81" positionY="-441" width="128" height="105"/>
+    </elements>
+</model>
