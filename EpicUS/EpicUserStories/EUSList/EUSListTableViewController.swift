@@ -28,8 +28,17 @@ class EUSTableViewController: UITableViewController {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        epicUserStories = rootViewController.epicUserStories.filter({$0.direction == direction && rootViewController.getQuart(from: $0.tfsEndDate) ==  quart && $0.state == eusState})
-        epicUserStories = epicUserStories.sorted(by: {$0.tfsEndDate! < $1.tfsEndDate!})
+        if quart == 0 {
+            epicUserStories = rootViewController.epicUserStories.filter({$0.direction == direction && $0.state == eusState})
+            epicUserStories = epicUserStories.sorted(by: {$0.tfsBeginDate! < $1.tfsBeginDate!})
+        } else if quart == 5 {
+            epicUserStories = rootViewController.epicUserStories.filter({$0.direction == direction && $0.tfsId == 0 })
+            epicUserStories = epicUserStories.sorted(by: {$0.dateBegin! < $1.dateBegin!})
+        } else {
+            epicUserStories = rootViewController.epicUserStories.filter({$0.direction == direction && rootViewController.getQuart(from: $0.tfsEndDate) ==  quart && $0.state == eusState})
+            epicUserStories = epicUserStories.sorted(by: {$0.tfsEndDate! < $1.tfsEndDate!})
+        }
+        
     }
     
     
@@ -56,8 +65,14 @@ class EUSTableViewController: UITableViewController {
         let dateBegin: Date = eus.tfsBeginDate ?? (eus.tfsDateCreate ?? Date())
         cell.timeFactLabel.text = "\(Int(dateEnd.timeIntervalSince(dateBegin) / 24 / 60 / 60))"
         
-        let storePointsAnaliticPlane = Double(eus.storePointsAnaliticPlane ?? "0") ?? Double(0)
-        let storePointsDevPlane = Double(eus.storePointsDevPlane ?? "0") ?? Double(0)
+        var  storePointsAnaliticPlane = eus.tfsStorePointAnaliticPlan
+        if storePointsAnaliticPlane == 0 {
+            storePointsAnaliticPlane = Double(eus.storePointsAnaliticPlane ?? "0") ?? Double(0)
+        }
+        var storePointsDevPlane = eus.tfsStorePointDevPlan
+        if storePointsDevPlane == 0 {
+            storePointsDevPlane = Double(eus.storePointsDevPlane ?? "0") ?? Double(0)
+        }
         cell.storePointsAnaliticPlan.text = "\(storePointsAnaliticPlane)"
         cell.storePointsDevPlan.text = "\(storePointsDevPlane)"
         cell.storePointsPlan.text = "\(storePointsDevPlane + storePointsAnaliticPlane)"
